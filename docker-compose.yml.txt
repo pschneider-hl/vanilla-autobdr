@@ -38,3 +38,12 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+  beat:
+    build: .
+    command: celery -A worker.tasks beat --loglevel=info
+    volumes:
+      - .:/code
+    env_file:
+      - .env.dev
+    depends_on:
+      - redis
