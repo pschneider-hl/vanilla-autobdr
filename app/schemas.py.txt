@@ -1,0 +1,9 @@
+from pydantic import BaseModel
+
+class ContactCreate(BaseModel):
+    name: str
+    email: str
+    title: str
+    company: str
+    website: str
+    persona: str  # one of "success", "marketing", "advocacy", "support"

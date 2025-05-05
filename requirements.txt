@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+httpx
+sendgrid
+sqlalchemy
+psycopg2-binary
+python-dotenv
+openai
+celery[redis]

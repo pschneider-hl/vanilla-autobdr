@@ -1,0 +1,50 @@
+import openai
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+from dotenv import load_dotenv
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+def generate_email_prompt(contact):
+    persona_prompts = {
+        "success": "Customer Success leaders often look for ways to proactively reduce churn...",
+        "marketing": "Customer marketers value storytelling and proof points...",
+        "advocacy": "Advocacy leaders focus on turning customers into evangelists...",
+        "support": "Support teams want scalable solutions to reduce tickets and improve experience..."
+    }
+
+    prompt = f"""
+You are a polite, smart, and helpful BDR writing a cold outbound email to someone in the {contact.persona} department.
+Their title is "{contact.title}" and their company is "{contact.company}".
+The company website is "{contact.website}".
+Use a personalized subject line and a short, conversational email body asking for a short meeting.
+
+Context about what this persona cares about:
+{persona_prompts.get(contact.persona, '')}
+"""
+    return prompt
+
+def send_initial_email(contact):
+    prompt = generate_email_prompt(contact)
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7,
+    )
+
+    text = response["choices"][0]["message"]["content"]
+
+    message = Mail(
+        from_email="yourname@yourdomain.com",
+        to_emails=contact.email,
+        subject="Let's connect" if "Subject:" not in text else None,
+        plain_text_content=text,
+    )
+
+    try:
+        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg.send(message)
+    except Exception as e:
+        print(f"Error sending email: {e}")

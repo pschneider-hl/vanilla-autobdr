@@ -1,0 +1,10 @@
+from fastapi import FastAPI, BackgroundTasks
+from .schemas import ContactCreate
+from .email_service import send_initial_email
+
+app = FastAPI()
+
+@app.post("/contacts/")
+async def create_contact(contact: ContactCreate, tasks: BackgroundTasks):
+    tasks.add_task(send_initial_email, contact)
+    return {"message": "Email generation started"}
