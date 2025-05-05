@@ -1,0 +1,42 @@
+# app/csv_importer.py
+
+import pandas as pd
+from .schemas import ContactCreate
+
+def load_contacts_from_csv(file_path: str):
+    df = pd.read_csv(file_path)
+
+    contacts = []
+    for _, row in df.iterrows():
+        name = row['Name']
+        email = row['Email']
+        title = row['Title']
+        company = row['Company']
+        website = row['Website']
+
+        if pd.isna(email) or pd.isna(title):
+            continue
+
+        # Guess persona if not provided
+        persona = str(row.get("Persona", "")).lower()
+        if persona not in ["success", "marketing", "advocacy", "support"]:
+            if "marketing" in title.lower():
+                persona = "marketing"
+            elif "advocacy" in title.lower():
+                persona = "advocacy"
+            elif "support" in title.lower():
+                persona = "support"
+            else:
+                persona = "success"
+
+        contact = ContactCreate(
+            name=name,
+            email=email,
+            title=title,
+            company=company,
+            website=website,
+            persona=persona
+        )
+        contacts.append(contact)
+
+    return contacts
