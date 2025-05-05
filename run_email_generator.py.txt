@@ -1,0 +1,48 @@
+import pandas as pd
+from dotenv import load_dotenv
+import os
+import openai
+from app.schemas import ContactCreate
+from app.email_prompts import get_prompt
+
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+def generate_email(contact: ContactCreate, attempt: int = 1):
+    prompt = get_prompt(contact, attempt)
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return response.choices[0].message.content
+
+
+def run_from_csv(path="contacts.csv"):
+    df = pd.read_csv(path)
+    for _, row in df.iterrows():
+        name = f"{row['First Name']} {row['Last Name']}"
+        email = row['Email']
+        title = row['Title']
+        company = row['Company']
+        website = row['Website']
+        persona = row.get('Persona', 'success').lower()
+
+        contact = ContactCreate(
+            name=name,
+            email=email,
+            title=title,
+            company=company,
+            website=website,
+            persona=persona
+        )
+
+        email_text = generate_email(contact, attempt=1)
+        print("=" * 60)
+        print(f"To: {email}")
+        print(email_text)
+        print("=" * 60 + "\n")
+
+if __name__ == "__main__":
+    run_from_csv()
